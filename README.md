@@ -1,4 +1,4 @@
-= Cassandra interface for charms.reactive Juju charms
+# Cassandra interface for charms.reactive Juju charms
 
 charms.reactive Endpoint for Cassandra clients. To use,
 add 'interface:cassandra' to your layer.yaml:
@@ -9,12 +9,14 @@ includes:
     - interface:cassandra
 ```
 
-== Flags
+Flags
+-----
 
-- `endpoint.{endpoint_name}.joined`: The relation has been joined, but may not be available.
-- `endpoint.{endpoint_name}.available`: The Cassandra database is available.
+* `endpoint.{endpoint_name}.joined`: The relation has been joined, but may not be available.
+* `endpoint.{endpoint_name}.available`: The Cassandra database is available.
 
-== Usage
+Usage
+-----
 
 For a relation defined in metadata.yaml named 'mydb':
 
@@ -32,7 +34,8 @@ def configure():
     reactive.set_flag('myapp.configured')
 ```
 
-== Details
+Details
+-------
 
 The 'details' property on the endpoint provides a list-like collection
 (a charms.reactive.endpoint.KeyList) of CassandraDetails objects:
