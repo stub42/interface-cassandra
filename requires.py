@@ -43,6 +43,7 @@ class CassandraEndpoint(reactive.Endpoint):
     Usage:
         from charms import reactive
         from charms.reactive.flags import register_trigger
+
         register_trigger('endpoint.mydb.changed', clear_flag='myapp.configured')
 
         @when('endpoint.mydb.available')
@@ -54,13 +55,22 @@ class CassandraEndpoint(reactive.Endpoint):
             reactive.set_flag('myapp.configured')
     '''
     @when('endpoint.{endpoint_name}.changed.host')
-    def available(self):
+    def server_changed(self):
+        self.set_available()
+        reactive.clear_flag(self.expand_name('endpoint.{endpoint_name}.changed.host'))
+
+    @when('endpoint.{endpoint_name}.departed')
+    def server_departed(self):
+        self.set_available()
+
+    def set_available(self):
         reactive.toggle_flag(self.expand_name('endpoint.{endpoint_name}.available'),
                              len(self.details) > 0)
-        reactive.clear_flag(self.expand_name('endpoint.{endpoint_name}.changed.host'))
 
     @when('endpoint.{endpoint_name}.changed')
     def changed(self):
+        # We need to reset the .changed state, so do it. Charms can react to it
+        # by registering a trigger.
         reactive.clear_flag(self.expand_name('endpoint.{endpoint_name}.changed'))
 
     @property
@@ -71,7 +81,7 @@ class CassandraEndpoint(reactive.Endpoint):
         instances. This object can be iterated over or accessed by relation id.
 
         >>> ep = reactive.endpoint_from_flag('endpoint.mydb.available')
-        >>> first_details = ep.details[0]
+        >>> first_details = ep.details[0] if ep.details else None
         >>> all_details = set(ep.details)
         >>> rel_details = ep.details['db:0']
 
@@ -98,7 +108,12 @@ class CassandraEndpoint(reactive.Endpoint):
         '''
         cqlshrc_path = os.path.expanduser('~{}/.cassandra/cqlshrc'.format(owner))
 
-        first = self.details[0]
+        details = self.details
+        if not details:
+            if os.path.exists(cqlshrc_path):
+                os.remove(cqlshrc_path)
+            return
+        first = details[0]
 
         cqlshrc = configparser.ConfigParser(interpolation=None)
         cqlshrc.read([cqlshrc_path])
